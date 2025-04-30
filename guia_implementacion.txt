@@ -1,0 +1,374 @@
+# GUIA DE IMPLEMENTACION: VM MANAGEMENT SYSTEM
+# Para Ubuntu 24.04 LTS Minimal en contenedor LXD
+
+## INDICE
+1. Preparar el sistema host
+2. Configurar contenedor LXD
+3. Instalar dependencias del sistema
+4. Configurar PostgreSQL
+5. Configurar entorno virtual Python
+6. Implementar el proyecto
+7. Configurar Apache
+8. Configuracion de WSGI
+9. Iniciar el servicio y verificacion
+10. Seguridad y mantenimiento
+
+## 1. PREPARAR EL SISTEMA HOST
+
+### Instalar LXD (si no esta instalado)
+```
+sudo apt-get update
+sudo apt-get install -y snapd
+sudo snap install lxd
+sudo lxd init --auto
+```
+
+## 2. CONFIGURAR CONTENEDOR LXD
+
+### Crear y configurar el contenedor
+```
+# Crear el contenedor usando Ubuntu 24.04 LTS minimal
+sudo lxc launch ubuntu:24.04 vm-management -c limits.cpu=2 -c limits.memory=2GB
+
+# Acceder al contenedor
+sudo lxc exec vm-management -- bash
+
+# Actualizar el sistema dentro del contenedor
+apt-get update
+apt-get upgrade -y
+```
+
+## 3. INSTALAR DEPENDENCIAS DEL SISTEMA
+
+### Instalar paquetes esenciales
+```
+apt-get install -y \
+    vim \
+    python3 \
+    python3-pip \
+    python3-venv \
+    python3-dev \
+    postgresql \
+    postgresql-contrib \
+    libpq-dev \
+    apache2 \
+    libapache2-mod-wsgi-py3 \
+    git \
+    curl \
+    build-essential
+```
+
+## 4. CONFIGURAR POSTGRESQL
+
+### Iniciar y configurar PostgreSQL
+```
+# Iniciar servicio PostgreSQL
+systemctl start postgresql
+systemctl enable postgresql
+
+# Cambiar al usuario postgres
+su - postgres
+
+# Crear usuario de base de datos
+psql -c "CREATE USER vmadmin WITH PASSWORD 'SecurePassword123';"
+
+# Crear base de datos
+psql -c "CREATE DATABASE vmmanagement;"
+
+# Otorgar privilegios
+psql -c "GRANT ALL PRIVILEGES ON DATABASE vmmanagement TO vmadmin;"
+
+# Configurar acceso (opcional para entornos de desarrollo)
+echo "local all vmadmin md5" >> /etc/postgresql/*/main/pg_hba.conf
+
+# Volver al usuario root
+exit
+
+# Reiniciar PostgreSQL para aplicar cambios
+systemctl restart postgresql
+```
+
+## 5. CONFIGURAR ENTORNO VIRTUAL PYTHON
+
+### Crear directorio y entorno para el proyecto
+```
+# Crear directorio del proyecto
+mkdir -p /var/www/vmmanagement
+cd /var/www/vmmanagement
+
+# Crear y activar entorno virtual
+python3 -m venv venv
+source venv/bin/activate
+
+# Actualizar pip
+pip install --upgrade pip
+```
+
+## 6. IMPLEMENTAR EL PROYECTO
+
+### Clonar o copiar el proyecto
+```
+# Si desea clonar desde un repositorio Git
+# git clone https://tu-repositorio/vmmanagement.git /var/www/vmmanagement/app
+
+# O crear la estructura de directorios manualmente
+mkdir -p /var/www/vmmanagement/app
+mkdir -p /var/www/vmmanagement/app/static
+mkdir -p /var/www/vmmanagement/app/templates
+mkdir -p /var/www/vmmanagement/app/blueprints
+```
+
+### Instalar dependencias de Python
+```
+# Asegurarse de que el entorno virtual esta activado
+source /var/www/vmmanagement/venv/bin/activate
+
+# Instalar dependencias de Python
+pip install flask
+pip install flask-login
+pip install flask-sqlalchemy
+pip install flask-wtf
+pip install gunicorn
+pip install psycopg2-binary
+pip install email-validator
+pip install werkzeug
+pip install wtforms
+
+# Crear archivo requirements.txt para futuras instalaciones
+pip freeze > /var/www/vmmanagement/requirements.txt
+```
+
+### Configuracion del proyecto
+```
+# Copiar los archivos del proyecto a la ubicacion /var/www/vmmanagement/app
+# Aqui necesitaras copiar todos los archivos desde tu maquina local
+
+# Crear o editar el archivo de configuracion
+vim /var/www/vmmanagement/app/config.py
+```
+
+Contenido de config.py:
+```python
+import os
+
+# Configuracion de la base de datos
+SQLALCHEMY_DATABASE_URI = "postgresql://vmadmin:SecurePassword123@localhost/vmmanagement"
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+# Configuracion de seguridad
+SECRET_KEY = "tu_clave_secreta_muy_segura_y_compleja"
+
+# Carpeta de subida de archivos (si es necesario)
+UPLOAD_FOLDER = '/var/www/vmmanagement/app/static/uploads'
+
+# Otras configuraciones
+DEBUG = False
+```
+
+### Inicializar la base de datos
+```
+# Asegurarse de que el entorno virtual esta activado
+source /var/www/vmmanagement/venv/bin/activate
+
+# Crear script para inicializar la base de datos si no existe
+cd /var/www/vmmanagement/app
+python -c "from app import db; db.create_all()"
+
+# Ejecutar script para inicializar admin
+python reset_admin.py
+```
+
+## 7. CONFIGURAR APACHE
+
+### Configurar el sitio web en Apache
+```
+# Crear archivo de configuracion de Apache
+vim /etc/apache2/sites-available/vmmanagement.conf
+```
+
+Contenido del archivo vmmanagement.conf:
+```apache
+<VirtualHost *:80>
+    ServerName vm.example.com
+    ServerAdmin webmaster@example.com
+
+    DocumentRoot /var/www/vmmanagement
+
+    # Configuracion WSGI
+    WSGIDaemonProcess vmmanagement python-home=/var/www/vmmanagement/venv python-path=/var/www/vmmanagement
+    WSGIProcessGroup vmmanagement
+    WSGIScriptAlias / /var/www/vmmanagement/wsgi.py
+
+    <Directory /var/www/vmmanagement>
+        WSGIProcessGroup vmmanagement
+        WSGIApplicationGroup %{GLOBAL}
+        Require all granted
+    </Directory>
+
+    # Archivos estaticos
+    Alias /static/ /var/www/vmmanagement/app/static/
+    <Directory /var/www/vmmanagement/app/static/>
+        Require all granted
+    </Directory>
+
+    # Logs
+    ErrorLog ${APACHE_LOG_DIR}/vmmanagement-error.log
+    CustomLog ${APACHE_LOG_DIR}/vmmanagement-access.log combined
+</VirtualHost>
+```
+
+### Crear archivo WSGI
+```
+# Crear archivo wsgi.py
+vim /var/www/vmmanagement/wsgi.py
+```
+
+Contenido del archivo wsgi.py:
+```python
+import sys
+import os
+
+# Agregar el directorio de la aplicacion al path
+sys.path.insert(0, '/var/www/vmmanagement')
+sys.path.insert(0, '/var/www/vmmanagement/app')
+
+# Activar el entorno virtual
+activate_this = '/var/www/vmmanagement/venv/bin/activate_this.py'
+with open(activate_this) as file_:
+    exec(file_.read(), dict(__file__=activate_this))
+
+# Importar la aplicacion
+from app import app as application
+```
+
+### Configurar permisos
+```
+# Establecer permisos correctos
+chown -R www-data:www-data /var/www/vmmanagement
+chmod -R 755 /var/www/vmmanagement
+
+# Dar permisos especiales al directorio de subida si existe
+if [ -d "/var/www/vmmanagement/app/static/uploads" ]; then
+    chmod -R 775 /var/www/vmmanagement/app/static/uploads
+fi
+```
+
+## 8. CONFIGURACION DE WSGI
+
+### Habilitar sitio y modulos
+```
+# Habilitar el sitio
+a2ensite vmmanagement.conf
+
+# Habilitar modulos necesarios
+a2enmod wsgi
+a2enmod rewrite
+
+# Deshabilitar sitio por defecto (opcional)
+a2dissite 000-default.conf
+
+# Reiniciar Apache
+systemctl restart apache2
+```
+
+## 9. INICIAR EL SERVICIO Y VERIFICACION
+
+### Iniciar servicios
+```
+# Asegurarse de que PostgreSQL esta funcionando
+systemctl status postgresql
+
+# Reiniciar Apache
+systemctl restart apache2
+
+# Verificar errores en los logs
+tail -f /var/log/apache2/vmmanagement-error.log
+```
+
+### Prueba de funcionamiento
+```
+# Comprobar si el sitio responde
+curl -I http://localhost
+# Deberia devolver un codigo HTTP 200
+```
+
+## 10. SEGURIDAD Y MANTENIMIENTO
+
+### Configurar copias de seguridad
+```
+# Crear script de backup
+vim /usr/local/bin/backup-vmmanagement.sh
+```
+
+Contenido del script de backup:
+```bash
+#!/bin/bash
+DATE=$(date +%Y-%m-%d_%H-%M-%S)
+BACKUP_DIR="/backup/vmmanagement"
+
+# Crear directorio si no existe
+mkdir -p $BACKUP_DIR
+
+# Backup de la base de datos
+su - postgres -c "pg_dump vmmanagement" > $BACKUP_DIR/db_$DATE.sql
+
+# Backup de archivos
+tar -czf $BACKUP_DIR/files_$DATE.tar.gz /var/www/vmmanagement
+
+# Eliminar backups antiguos (mantener solo los ultimos 7 dias)
+find $BACKUP_DIR -name "*.sql" -mtime +7 -delete
+find $BACKUP_DIR -name "*.tar.gz" -mtime +7 -delete
+```
+
+```
+# Dar permisos de ejecucion
+chmod +x /usr/local/bin/backup-vmmanagement.sh
+
+# Programar backup diario
+echo "0 2 * * * root /usr/local/bin/backup-vmmanagement.sh" > /etc/cron.d/backup-vmmanagement
+```
+
+### Actualizar el proyecto (cuando sea necesario)
+```
+# Entrar al directorio del proyecto
+cd /var/www/vmmanagement
+
+# Activar entorno virtual
+source venv/bin/activate
+
+# Pull cambios (si se usa git)
+# git pull origin main
+
+# Actualizar dependencias si hay cambios
+pip install -r requirements.txt
+
+# Reiniciar Apache
+systemctl restart apache2
+```
+
+## NOTAS IMPORTANTES
+
+1. Mantener actualizadas las credenciales y claves secretas
+2. Actualizar regularmente el sistema operativo con apt-get update y apt-get upgrade
+3. Monitorear los logs de Apache y PostgreSQL para detectar problemas
+4. Realizar backups regulares de la base de datos y archivos
+5. Considerar configurar HTTPS con certbot para proteger el trafico
+
+## RESOLUCION DE PROBLEMAS
+
+### Si el sitio no carga
+- Verificar logs: `tail -f /var/log/apache2/vmmanagement-error.log`
+- Comprobar permisos: `ls -la /var/www/vmmanagement/`
+- Verificar estado de Apache: `systemctl status apache2`
+
+### Si hay problemas con la base de datos
+- Verificar la conexion: `sudo -u postgres psql -c "\l"`
+- Comprobar que PostgreSQL esta funcionando: `systemctl status postgresql`
+- Verificar la cadena de conexion en config.py
+
+## REFERENCIAS
+
+- Documentacion de Apache: https://httpd.apache.org/docs/
+- Documentacion de Flask: https://flask.palletsprojects.com/
+- Documentacion de PostgreSQL: https://www.postgresql.org/docs/
+- Documentacion de mod_wsgi: https://modwsgi.readthedocs.io/

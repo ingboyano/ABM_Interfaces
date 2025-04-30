@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}VM Details: {{ vm.name }} - VM Management System{% endblock %}
+
+{% block page_title %}VM Details: {{ vm.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="btn-group">
+            <a href="{{ url_for('vms.list_vms') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to List
+            </a>
+            <a href="{{ url_for('vms.edit_vm', vm_id=vm.id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-edit me-1"></i> Edit VM
+            </a>
+            {% if current_user.role == 'admin' and vm.status == 'Pending' %}
+            <a href="{{ url_for('vms.approve_vm', vm_id=vm.id) }}" class="btn btn-outline-success">
+                <i class="fas fa-check-circle me-1"></i> Approve/Reject
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        {% if vm.status == 'Pending' %}
+        <span class="badge bg-warning text-dark status-badge p-2">
+            <i class="fas fa-clock me-1"></i>Pending Approval
+        </span>
+        {% elif vm.status == 'Approved' %}
+        <span class="badge bg-success status-badge p-2">
+            <i class="fas fa-check-circle me-1"></i>Approved
+        </span>
+        {% elif vm.status == 'Rejected' %}
+        <span class="badge bg-danger status-badge p-2">
+            <i class="fas fa-times-circle me-1"></i>Rejected
+        </span>
+        {% elif vm.status == 'Active' %}
+        <span class="badge bg-primary status-badge p-2">
+            <i class="fas fa-server me-1"></i>Active
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <!-- VM Details -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>VM Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">VM Name</h6>
+                        <p class="fs-5 fw-bold">{{ vm.name }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">Operating System</h6>
+                        <p>{{ vm.operating_system }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">CPUs</h6>
+                        <p><i class="fas fa-microchip me-1"></i> {{ vm.cpu_count }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">RAM</h6>
+                        <p><i class="fas fa-memory me-1"></i> {{ vm.ram_gb }} GB</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">Disk</h6>
+                        <p><i class="fas fa-hdd me-1"></i> {{ vm.disk_gb }} GB</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">Physical Location</h6>
+                        <p>{{ vm.physical_location or 'Not specified' }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">Virtual Host</h6>
+                        <p>{{ vm.virtual_host or 'Not specified' }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">Backup Required</h6>
+                        <p>{{ 'Yes' if vm.backup_required else 'No' }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">Backup Frequency</h6>
+                        <p>{{ vm.backup_frequency or 'None' }}</p>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <h6 class="text-muted mb-1">VLANs</h6>
+                        <div>
+                            {% if vm.vlans %}
+                                {% for vlan in vm.vlans %}
+                                <span class="badge bg-info vlan-badge">{{ vlan.name }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <p>No VLANs assigned</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <h6 class="text-muted mb-1">Notes</h6>
+                        <div class="bg-light p-3 rounded">
+                            {% if vm.notes %}
+                                <p class="mb-0" style="white-space: pre-line;">{{ vm.notes }}</p>
+                            {% else %}
+                                <p class="text-muted mb-0">No additional notes provided.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contact Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-address-card me-2"></i>Contact Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">Requestor</h6>
+                        <p>{{ vm.requestor_name }}</p>
+                        <p><a href="mailto:{{ vm.requestor_email }}"><i class="fas fa-envelope me-1"></i>{{ vm.requestor_email }}</a></p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">Primary Administrator</h6>
+                        <p>{{ vm.primary_admin_name }}</p>
+                        <p><a href="mailto:{{ vm.primary_admin_email }}"><i class="fas fa-envelope me-1"></i>{{ vm.primary_admin_email }}</a></p>
+                    </div>
+                    {% if vm.secondary_admin_name %}
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">Secondary Administrator</h6>
+                        <p>{{ vm.secondary_admin_name }}</p>
+                        {% if vm.secondary_admin_email %}
+                        <p><a href="mailto:{{ vm.secondary_admin_email }}"><i class="fas fa-envelope me-1"></i>{{ vm.secondary_admin_email }}</a></p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar - Request Status & History -->
+    <div class="col-lg-4">
+        <!-- Request Dates Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Request Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Created On</h6>
+                    <p><i class="fas fa-calendar me-2"></i>{{ vm.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Last Updated</h6>
+                    <p><i class="fas fa-clock me-2"></i>{{ vm.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                </div>
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Submitted By</h6>
+                    <p><i class="fas fa-user me-2"></i>{{ vm.requestor_user.username if vm.requestor_user else 'Unknown' }}</p>
+                </div>
+                {% if vm.approver %}
+                <div class="mb-3">
+                    <h6 class="text-muted mb-1">Processed By</h6>
+                    <p><i class="fas fa-user-check me-2"></i>{{ vm.approver.username }}</p>
+                </div>
+                {% endif %}
+                <div>
+                    <h6 class="text-muted mb-1">Current Status</h6>
+                    {% if vm.status == 'Pending' %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-clock me-2"></i>Waiting for admin approval
+                    </div>
+                    {% elif vm.status == 'Approved' %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>Approved{% if vm.approver %} by {{ vm.approver.username }}{% endif %}
+                    </div>
+                    {% elif vm.status == 'Rejected' %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle me-2"></i>Rejected{% if vm.approver %} by {{ vm.approver.username }}{% endif %}
+                    </div>
+                    {% elif vm.status == 'Active' %}
+                    <div class="alert alert-primary">
+                        <i class="fas fa-server me-2"></i>VM is active and running
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Change History Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Change History</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if history %}
+                <div class="list-group list-group-flush">
+                    {% for change in history %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ change.changed_field }}</h6>
+                            <small class="text-muted">{{ change.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        <p class="mb-1">
+                            <small class="text-muted">From:</small> 
+                            {{ change.old_value or '(empty)' }}
+                        </p>
+                        <p class="mb-1">
+                            <small class="text-muted">To:</small> 
+                            {{ change.new_value or '(empty)' }}
+                        </p>
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>
+                            {{ change.user.username if change.user else 'Unknown' }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <p class="text-muted mb-0">No changes have been recorded yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

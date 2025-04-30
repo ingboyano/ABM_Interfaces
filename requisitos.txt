@@ -1,0 +1,64 @@
+## REQUISITOS PARA INSTALACION DEL SISTEMA VM MANAGEMENT
+
+# REQUISITOS DE SISTEMA (apt-get)
+---------------------------------
+vim                     # Editor de texto
+python3                 # Interprete de Python 3
+python3-pip             # Gestor de paquetes de Python
+python3-venv            # Herramienta para entornos virtuales
+python3-dev             # Archivos de desarrollo de Python
+postgresql              # Servidor de base de datos PostgreSQL
+postgresql-contrib      # Extensiones adicionales para PostgreSQL
+libpq-dev               # Archivos de desarrollo para PostgreSQL
+apache2                 # Servidor web Apache
+libapache2-mod-wsgi-py3 # Modulo WSGI para Apache
+git                     # Sistema de control de versiones
+curl                    # Herramienta para transferencia de datos
+build-essential         # Herramientas de desarrollo esenciales
+
+# REQUISITOS PARA FLASK (pip install)
+------------------------------------
+flask                   # Framework web
+flask-login             # Manejo de sesiones de usuario
+flask-sqlalchemy        # ORM para bases de datos
+flask-wtf               # Formularios web
+gunicorn                # Servidor WSGI HTTP
+psycopg2-binary         # Driver para PostgreSQL
+email-validator         # Validador de emails para formularios
+werkzeug                # Utilidades WSGI
+wtforms                 # Manejo de formularios
+
+# ARCHIVOS DE CONFIGURACION
+--------------------------
+/etc/apache2/sites-available/vmmanagement.conf  # Configuracion de Apache
+/var/www/vmmanagement/wsgi.py                   # Archivo WSGI
+/var/www/vmmanagement/app/config.py             # Configuracion del proyecto
+
+# PERMISOS DE EJECUCION
+----------------------
+chmod -R 755 /var/www/vmmanagement              # Permisos para el directorio del proyecto
+chown -R www-data:www-data /var/www/vmmanagement # Propiedad del directorio del proyecto
+chmod +x /usr/local/bin/backup-vmmanagement.sh   # Permiso para script de backup
+
+# PERMISOS DE USUARIO Y ROLES DE POSTGRESQL
+-----------------------------------------
+CREATE USER vmadmin WITH PASSWORD 'SecurePassword123';
+CREATE DATABASE vmmanagement;
+GRANT ALL PRIVILEGES ON DATABASE vmmanagement TO vmadmin;
+
+# CONFIGURACION DE APACHE
+-----------------------
+a2ensite vmmanagement.conf  # Activar configuracion de sitio
+a2enmod wsgi                # Activar modulo WSGI
+a2enmod rewrite             # Activar reescritura de URL
+systemctl restart apache2   # Reiniciar Apache
+
+# ESTRUCTURA DE DIRECTORIOS
+-------------------------
+/var/www/vmmanagement/                    # Directorio principal
+/var/www/vmmanagement/venv/               # Entorno virtual
+/var/www/vmmanagement/app/                # Aplicacion
+/var/www/vmmanagement/app/blueprints/     # Blueprints de Flask
+/var/www/vmmanagement/app/static/         # Archivos estaticos
+/var/www/vmmanagement/app/templates/      # Plantillas HTML
+/var/www/vmmanagement/app/static/images/  # Imagenes estaticas

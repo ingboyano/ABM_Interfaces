@@ -1,0 +1,448 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit VM - {{ vm.name }} - VM Management System{% endblock %}
+
+{% block page_title %}Edit VM: {{ vm.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Edit VM Request</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('vms.edit_vm', vm_id=vm.id) }}" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>VM Identification</h4>
+                            <hr>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.name.label(class="form-label required") }}
+                                {{ form.name(class="form-control", placeholder="Enter a unique VM name") }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Choose a descriptive, unique name for this VM.</div>
+                            </div>
+                        </div>
+                        {% if current_user.role == 'admin' %}
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.status.label(class="form-label required") }}
+                                {{ form.status(class="form-select") }}
+                                {% if form.status.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.status.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Current status of this VM request.</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>Contact Information</h4>
+                            <hr>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.requestor_name.label(class="form-label required") }}
+                                {{ form.requestor_name(class="form-control", placeholder="Full name of requestor") }}
+                                {% if form.requestor_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.requestor_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.requestor_email.label(class="form-label required") }}
+                                {{ form.requestor_email(class="form-control", placeholder="Email of requestor") }}
+                                {% if form.requestor_email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.requestor_email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.primary_admin_name.label(class="form-label required") }}
+                                {{ form.primary_admin_name(class="form-control", placeholder="Full name of primary admin") }}
+                                {% if form.primary_admin_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.primary_admin_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Person primarily responsible for this VM.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.primary_admin_email.label(class="form-label required") }}
+                                {{ form.primary_admin_email(class="form-control", placeholder="Email of primary admin") }}
+                                {% if form.primary_admin_email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.primary_admin_email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.secondary_admin_name.label(class="form-label") }}
+                                {{ form.secondary_admin_name(class="form-control", placeholder="Full name of secondary admin (optional)") }}
+                                {% if form.secondary_admin_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.secondary_admin_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Backup contact for this VM (optional).</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.secondary_admin_email.label(class="form-label") }}
+                                {{ form.secondary_admin_email(class="form-control", placeholder="Email of secondary admin (optional)") }}
+                                {% if form.secondary_admin_email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.secondary_admin_email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>VM Specifications</h4>
+                            <hr>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.cpu_count.label(class="form-label required") }}
+                                {{ form.cpu_count(class="form-control", min=1, placeholder="Number of CPUs") }}
+                                {% if form.cpu_count.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.cpu_count.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Number of virtual CPU cores.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.ram_gb.label(class="form-label required") }}
+                                {{ form.ram_gb(class="form-control", min=1, placeholder="RAM in GB") }}
+                                {% if form.ram_gb.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.ram_gb.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Memory in Gigabytes (GB).</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.disk_gb.label(class="form-label required") }}
+                                {{ form.disk_gb(class="form-control", min=10, placeholder="Disk size in GB") }}
+                                {% if form.disk_gb.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.disk_gb.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Disk space in Gigabytes (GB).</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.operating_system.label(class="form-label required") }}
+                                {{ form.operating_system(class="form-control", placeholder="Escriba el sistema operativo") }}
+                                {% if form.operating_system.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.operating_system.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Escriba el sistema operativo para esta VM (ejemplo: Ubuntu 24.04 LTS, Windows Server 2022, etc.).</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.vlans.label(class="form-label") }}
+                                <div class="d-flex">
+                                    <div class="flex-grow-1 me-2">
+                                        {{ form.vlans(class="form-select select2-vlans", multiple="multiple", style="width: 100%") }}
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addVlanModal">
+                                        <i class="fas fa-plus"></i> Agregar
+                                    </button>
+                                </div>
+                                {% if form.vlans.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.vlans.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Seleccione una o más VLANs para esta VM. Puede agregar nuevas VLANs con el botón.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>Location Information</h4>
+                            <hr>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.physical_location.label(class="form-label") }}
+                                {{ form.physical_location(class="form-control", placeholder="Physical datacenter location (optional)") }}
+                                {% if form.physical_location.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.physical_location.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Datacenter or location preference (if any).</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.virtual_host.label(class="form-label") }}
+                                {{ form.virtual_host(class="form-control", placeholder="Virtual host (optional)") }}
+                                {% if form.virtual_host.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.virtual_host.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Specific virtual host if required.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>Backup Configuration</h4>
+                            <hr>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check">
+                                {{ form.backup_required(class="form-check-input") }}
+                                {{ form.backup_required.label(class="form-check-label") }}
+                                {% if form.backup_required.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.backup_required.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6" id="backup_frequency_group">
+                            <div class="mb-3">
+                                {{ form.backup_frequency.label(class="form-label") }}
+                                {{ form.backup_frequency(class="form-select") }}
+                                {% if form.backup_frequency.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.backup_frequency.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4>Additional Information</h4>
+                            <hr>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                {{ form.notes.label(class="form-label") }}
+                                {{ form.notes(class="form-control", rows=4, placeholder="Any additional notes or requirements") }}
+                                {% if form.notes.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.notes.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Include any additional details or special requirements.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="fas fa-save me-2"></i>{{ form.submit.label.text }}
+                            </button>
+                            <a href="{{ url_for('vms.view_vm', vm_id=vm.id) }}" class="btn btn-outline-secondary btn-lg px-5 ms-2">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Adding New VLAN -->
+<div class="modal fade" id="addVlanModal" tabindex="-1" aria-labelledby="addVlanModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addVlanModalLabel">Agregar Nueva VLAN</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addVlanForm">
+                    <div class="mb-3">
+                        <label for="vlanName" class="form-label">Nombre VLAN</label>
+                        <input type="text" class="form-control" id="vlanName" placeholder="Ejemplo: VLAN505 mgmt">
+                        <div class="form-text">Ingrese el nombre de la VLAN (ej: VLAN505 mgmt, VLAN706 idrac)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="vlanDescription" class="form-label">Descripción</label>
+                        <input type="text" class="form-control" id="vlanDescription" placeholder="Descripción opcional">
+                    </div>
+                </form>
+                <div id="vlanModalAlert" class="alert d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveVlanBtn">Guardar VLAN</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block styles %}
+<!-- Include Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block scripts %}
+<!-- Include Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Select2 for VLANs after jQuery is loaded
+        setTimeout(function() {
+            try {
+                jQuery('.select2-vlans').select2({
+                    placeholder: 'Seleccione VLANs',
+                    allowClear: true,
+                    width: '100%'
+                });
+                
+                // Handle VLAN form submission
+                jQuery('#saveVlanBtn').click(function() {
+                    const vlanName = jQuery('#vlanName').val().trim();
+                    const vlanDescription = jQuery('#vlanDescription').val().trim();
+                    const alertDiv = jQuery('#vlanModalAlert');
+                    
+                    // Validate name
+                    if (!vlanName) {
+                        alertDiv.removeClass('d-none alert-success').addClass('alert-danger').text('El nombre de la VLAN es obligatorio');
+                        return;
+                    }
+                    
+                    // Reset alert
+                    alertDiv.addClass('d-none').removeClass('alert-danger alert-success');
+                    
+                    // Submit VLAN via AJAX
+                    jQuery.ajax({
+                        url: '{{ url_for("vms.add_vlan") }}',
+                        method: 'POST',
+                        data: {
+                            name: vlanName,
+                            description: vlanDescription
+                        },
+                        success: function(response) {
+                            // Create new option and append
+                            const newOption = new Option(response.name, response.id, true, true);
+                            jQuery('#vlans').append(newOption).trigger('change');
+                            
+                            // Show success message
+                            alertDiv.removeClass('d-none alert-danger').addClass('alert-success').text(response.message);
+                            
+                            // Reset form
+                            jQuery('#vlanName').val('');
+                            jQuery('#vlanDescription').val('');
+                            
+                            // Auto-close after delay
+                            setTimeout(function() {
+                                jQuery('#addVlanModal').modal('hide');
+                                alertDiv.addClass('d-none');
+                            }, 1500);
+                        },
+                        error: function(xhr) {
+                            let errorMsg = 'Error al agregar la VLAN';
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                errorMsg = xhr.responseJSON.error;
+                            }
+                            alertDiv.removeClass('d-none alert-success').addClass('alert-danger').text(errorMsg);
+                        }
+                    });
+                });
+                
+                // Reset modal on close
+                jQuery('#addVlanModal').on('hidden.bs.modal', function() {
+                    jQuery('#vlanName').val('');
+                    jQuery('#vlanDescription').val('');
+                    jQuery('#vlanModalAlert').addClass('d-none');
+                });
+                
+                console.log('Select2 and VLAN modal handlers initialized successfully');
+            } catch (e) {
+                console.error('Error initializing Select2:', e);
+            }
+        }, 500); // Give time for jQuery to be fully loaded
+    });
+</script>
+{% endblock %}
+
+{% endblock %}

@@ -1,0 +1,192 @@
+Project Overview
+Build a web‑based VM management system on Ubuntu 24.04 using Flask and PostgreSQL 16.8, served via Apache + mod_wsgi. Use a Python virtual environment and Bootstrap for styling and interactivity.
+
+Tech Stack & Environment
+
+OS: Ubuntu 24.04 minimal
+
+Language: Python 3.11 (or latest supported)
+
+Framework: Flask
+
+Database: PostgreSQL 16.8
+
+Web Server: Apache 2.4 with mod_wsgi
+
+Frontend: Bootstrap 5 (CSS, JS, animations)
+
+Authentication: Flask‑Login
+
+ORM: SQLAlchemy (or Flask‑SQLAlchemy)
+
+Versioning: Track creation/update history and user actions
+
+User Roles
+
+admin (username: admin, password: SvaTecnica1)
+
+View all VM requests
+
+Approve or reject requests
+
+See full audit trail
+
+user
+
+Log in and submit new VM requests
+
+Core Features & Data Model
+
+Authentication & Authorization
+
+Login page (/login)
+
+Role‑based access control
+
+Quick‑Actions Dashboard (/dashboard)
+
+Buttons/links: “List VMs” and “Request New VM”
+
+VM Request Form (/vms/new)
+Fields to store in PostgreSQL:
+
+VM Name
+
+Requestor Name & Email
+
+Primary Admin Name & Email
+
+Secondary Admin Name & Email
+
+Request Date
+
+CPUs (#)
+
+RAM (GB)
+
+Disk (GB)
+
+Physical Location
+
+Virtual Host
+
+Operating System
+
+Backup Required (Yes/No)
+
+Backup Frequency
+
+VLANs (dynamic list of N VLANs)
+
+Notes
+
+Status (Pending / Approved / Rejected / Active)
+
+List & Search VMs (/vms)
+
+Search by VM name
+
+Paginated table showing all fields
+
+Edit VM (/vms/<id>/edit)
+
+Preserve previous data before update
+
+Record who requested update and timestamps
+
+Show history of changes
+
+Detail View (/vms/<id>)
+
+Show current details, original submission, and update history
+
+Deliverables
+
+Database Schema
+
+schema.sql defining tables, relations, history/audit tables
+
+init_db.py script to initialize DB
+
+Python Backend
+
+app.py with Flask app factory
+
+Blueprints: auth, dashboard, vms
+
+Models with SQLAlchemy
+
+Flask‑Login setup
+
+Error handling and form validation
+
+Templates (templates/)
+
+base.html with Bootstrap layout
+
+login.html, dashboard.html, lista_vms.html, crear_vm.html, editar_vm.html, detalles_vm.html
+
+Static Assets (static/)
+
+Bootstrap CSS/JS via CDN or local files
+
+Custom styles.css and scripts.js for enhancements
+
+Deployment
+
+.wsgi entrypoint
+
+Apache 2.4 VirtualHost configuration snippet
+
+Instructions to install dependencies (requirements.txt)
+
+Commands to create Python virtualenv, install Flask and extensions
+
+Enable and test mod_wsgi
+
+Requirements File
+
+A .txt listing all Python packages and system‑level dependencies
+
+Step‑by‑Step Instructions
+
+Terminal commands for:
+
+System update & PostgreSQL installation
+
+Python 3 and virtualenv setup
+
+Cloning/structuring project
+
+Creating DB and user in PostgreSQL
+
+Installing Python dependencies
+
+Running migrations/init script
+
+Starting the Flask development server
+
+Configuring and restarting Apache
+
+Code Comments & Documentation
+
+Explain purpose of each module, function, and import
+
+Inline comments for key logic (e.g., login flow, audit trail)
+
+Prompt to the AI
+
+“Generate a complete Flask application as described above.
+
+Provide the PostgreSQL schema and initialization script.
+
+Implement the Flask backend with authentication, VM CRUD, history tracking, and role‑based permissions.
+
+Create Bootstrap‑styled templates and static assets.
+
+Include a requirements.txt and a .wsgi file.
+
+Supply an Apache VirtualHost config and detailed setup commands for Ubuntu 24.04.
+
+Comment every module and explain the role of each dependency.
+Organize your answer into clearly labeled sections, include full code listings, and explain each step so a developer can follow along from zero to deployment.”
